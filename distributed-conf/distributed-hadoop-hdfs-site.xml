@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+        <property>
+                <name>dfs.namenode.secondary.http-address</name>
+                <value>node-102:50090</value>
+        </property>
+    	<property>
+       		<name>dfs.replication</name>
+        	<value>3</value>
+    	</property>
+
+        <property>
+                <name>dfs.namenode.name.dir</name>
+                <value>file:///root/data/hadoop/hdfs/namenode</value>
+        </property>
+
+        <property>
+                <name>dfs.datanode.data.dir</name>
+                <value>file:///root/data/hadoop/hdfs/datanode</value>
+        </property>
+</configuration>
+

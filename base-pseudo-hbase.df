@@ -1,0 +1,68 @@
+FROM centos
+ENV JDK_PATH=jdk1.7.0_79 HBASE_PATH=hbase-1.2.4 HADOOP_PATH=hadoop-2.7.3 ZOOKEEPER_PATH=zookeeper-3.4.9
+
+COPY ./pack/* /root/
+WORKDIR /root/
+RUN pwd; tar zxvf ./jdk-7u79-linux-x64.tar.gz; \
+    tar zxvf ./${HBASE_PATH}-bin.tar.gz ; \
+    tar zxvf ./${HADOOP_PATH}.tar.gz; \
+    tar zxvf ./${ZOOKEEPER_PATH}.tar.gz; \
+    tar zxvf ./elementtree-1.2.6-20050316.tar.gz; \
+    tar zxvf ./meld3-0.6.5.tar.gz; \
+    tar zxvf ./supervisor-3.3.1.tar.gz; \
+    rm -f ./jdk-7u79-linux-x64.tar.gz ./${HBASE_PATH}-bin.tar.gz ${HADOOP_PATH}.tar.gz ${ZOOKEEPER_PATH}.tar.gz
+#ENV container docker 
+COPY ./pseudo-conf/* /root/conf/
+RUN cp /root/conf/pseudo-hadoop-core-site.xml /root/${HADOOP_PATH}/etc/hadoop/core-site.xml && \
+    cp /root/conf/pseudo-hadoop-hdfs-site.xml /root/${HADOOP_PATH}/etc/hadoop/hdfs-site.xml && \
+    cp /root/conf/pseudo-hadoop-env.sh /root/${HADOOP_PATH}/etc/hadoop/hadoop-env.sh && \
+    cp /root/conf/pseudo-hadoop-mapred-site.xml /root/${HADOOP_PATH}/etc/hadoop/mapred-site.xml && \
+    cp /root/conf/pseudo-hadoop-yarn-site.xml /root/${HADOOP_PATH}/etc/hadoop/yarn-site.xml && \
+    cp /root/conf/pseudo-zk-zoo.cfg /root/${ZOOKEEPER_PATH}/conf/zoo.cfg && \
+    cp /root/conf/pseudo-hbase-env.sh /root/${HBASE_PATH}/conf/hbase-env.sh && \
+    cp /root/conf/pseudo-hbase-site.xml /root/${HBASE_PATH}/conf/hbase-site.xml 
+
+#VOLUME ["/sys/fs/cgroup"] 
+# - Install basic packages (e.g. python-setuptools is required to have python's easy_install) 
+# - Install yum-utils so we have yum-config-manager tool available 
+# - Install inotify, needed to automate daemon restarts after config file changes
+# - Install jq, small library for handling JSON files/api from CLI
+# - Install supervisord (via python's easy_install - as it has the newest 3.x version)
+RUN yum -y update && \
+    yum install -y epel-release hostname iproute inotify-tools jq net-tools nmap-ncat openssh openssh-clients openssh-server python-setuptools rsync vim which yum-utils && \
+    yum clean all
+
+WORKDIR /root/meld3-0.6.5
+RUN python setup.py install
+WORKDIR /root/elementtree-1.2.6-20050316
+RUN python setup.py install
+WORKDIR /root/supervisor-3.3.1
+RUN python setup.py install
+WORKDIR /root/
+
+#RUN easy_install supervisor && \
+RUN mkdir /var/run/sshd /var/log/supervisor && \
+    echo 'root:root' | chpasswd && \ 
+    mkdir /etc/supervisor/ && \
+    cp /root/conf/pseudo-supervisord.conf /etc/supervisor/supervisord.conf && \
+    rm -rf meld3-0.6.5* elementtree-1.2.6-20050316* supervisor-3.3.1*
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    set -i 's/\#PermitRootLogin yes/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    ssh-keygen -A
+
+# SSH login fix. Otherwise user is kicked off after login
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+ENV NOTVISIBLE "in users profile"
+RUN echo "export VISIBLE=now" >> /etc/profile
+
+RUN ssh-keygen -t dsa -P '' -f /root/.ssh/id_dsa && \ 
+    cat /root/.ssh/id_dsa.pub >> /root/.ssh/authorized_keys && \
+    chmod 0600 /root/.ssh/authorized_keys
+
+ENV JAVA_HOME="/root/${JDK_PATH}" HBASE_HOME="/root/${HBASE_PATH}" HADOOP_HOME="/root/${HADOOP_PATH}" ZK_HOME="/root/${ZOOKEEPER_PATH}"
+ENV PATH=$JAVA_HOME/bin:$HBASE_HOME/bin:$PATH:$HADOOP_HOME/bin:$ZK_HOME/bin:$HADOOP_HOME/sbin
+
+#ssh hdfs zookpeeper
+EXPOSE 22 9000 2181
+CMD ["/usr/bin/supervisord"]

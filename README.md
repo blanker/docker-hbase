@@ -1,13 +1,13 @@
 # docker-hbase
   利用docker创建一个分布式HBase环境，以学习Docker和分布式
 
-#### 首先创建一个image，通过以下命令 
+### 首先创建一个image，通过以下命令 
 ```Bash
 docker build -f base-distributed-hbase.df -t local/base-distributed-hbase --rm .
 ```  
   生成新的image的tag就是local/base-distributed-hbase
 
-#### 其次利用新生成的image创建5个container   
+### 其次利用新生成的image创建5个container   
   注意：在创建image时已经固化了配置，这5个container的hostname、ip地址都是确定的了。  
   因此要先新建一个docker network，子网是172.18.0.0/16，，命令是：  
 ```Bash
@@ -44,7 +44,7 @@ docker run --add-host=node-102:172.18.0.102 --add-host=node-103:172.18.0.103 --a
 6. -p 50x70:50070 这是映射的NameNode的http server端口  
 7. --env "MYID=xxx"这是让初始化脚本去生成Zookeeper的myid文件的  
 
-#### 然后分别进入这5个container  
+### 然后分别进入这5个container  
 ```Bash
 docker exec -it node-101 /bin/bash
 docker exec -it node-102 /bin/bash
@@ -53,8 +53,8 @@ docker exec -it node-104 /bin/bash
 docker exec -it node-105 /bin/bash
 ```
 
-#### 首次初始化需要的步骤  
-1. 免密码ssh到其他节点，以下命令分别在node-101和node-102上运行  
+### 首次初始化需要的步骤  
+* 免密码ssh到其他节点，以下命令分别在node-101和node-102上运行  
 ```Bash  
 ssh localhost "pwd"
 ssh 0.0.0.0 "pwd"
@@ -65,7 +65,7 @@ ssh node-104 "pwd"
 ssh node-105 "pwd"
 ```
 
-2. 运行Zookeeper，以下命令需要在5个节点上都运行  
+* 运行Zookeeper，以下命令需要在5个节点上都运行  
 ```Bash
 zkServer.sh start  
 ```  
@@ -74,12 +74,12 @@ zkServer.sh start
 zkServer.sh status  
 ```  
 
-3. 启动journalnode，因为只配置了前三个节点运行journalnode，只需要在node-101、node-102、node-103上运行即可  
+* 启动journalnode，因为只配置了前三个节点运行journalnode，只需要在node-101、node-102、node-103上运行即可  
 ```Bash
 hadoop-daemon.sh start journalnode  
 ```  
 
-4. 格式化namenode，只需要在node-101上运行  
+* 格式化namenode，只需要在node-101上运行  
 ```Bash
 hdfs namenode -format  
 hdfs zkfc -formatZK  
@@ -89,36 +89,36 @@ hdfs zkfc -formatZK
 hadoop-daemon.sh start namenode  
 ```  
 
-5. 初始化standby namenode，只需要在node-102上运行  
+* 初始化standby namenode，只需要在node-102上运行  
 ```Bash
 hdfs namenode -bootstrapStandby  
 hadoop-daemon.sh start namenode  
 ```  
 
-6. 启动所有datanode，在node-101上运行即可  
+* 启动所有datanode，在node-101上运行即可  
 ```Bash
 hadoop-daemons.sh start datanode  
 ```  
 
-7. 启动zkfc，只需要在node-101、node-102上运行即可  
+* 启动zkfc，只需要在node-101、node-102上运行即可  
 ```Bash
 hadoop-daemon.sh start zkfc  
 ```  
 
-8. 启动hbase，在node-101上运行即可  
+* 启动hbase，在node-101上运行即可  
 ```Bash
 start-hbase.sh  
 ```  
 
-9. 验证一下，通过hbase shell命令进入hbase，运行list语句看看正常与否。  
+* 验证一下，通过hbase shell命令进入hbase，运行list语句看看正常与否。  
 
-10. 可选的ResourceManager，NodeManager，JobHistoryServer，在node-101上运行  
+* 可选的ResourceManager，NodeManager，JobHistoryServer，在node-101上运行  
 ```Bash
 start-yarn.sh  
 mr-jobhistory-daemon.sh start historyserver  
 ```  
 
-11. 停止这些服务的话，按照相反顺序停止即可  
+* 停止这些服务的话，按照相反顺序停止即可  
 node-101上运行：  
 ```Bash
 mr-jobhistory-daemon.sh stop historyserver  
@@ -154,12 +154,12 @@ node-101/102/103/104/105:
 zkServer.sh stop  
 ```
 
-#### 不是首次启动服务的话就可以简单进行了  
-1. 运行Zookeeper，以下命令需要在5个节点上都运行  
+### 不是首次启动服务的话就可以简单进行了  
+* 运行Zookeeper，以下命令需要在5个节点上都运行  
 ```Bash
 zkServer.sh start  
 ```
-2. node-101：  
+* node-101：  
 ```Bash
 start-dfs.sh  
 start-yarn.sh  
@@ -168,21 +168,21 @@ start-hbase.sh
 ```
 
 停止命令也是一样反过来即可  
-1. node-101  
+* node-101  
 ```Bash
 stop-hbase.sh  
 mr-jobhistory-daemon.sh stop historyserver  
 stop-yarn.sh  
 stop-dfs.sh  
 ```
-2. 5个节点上停止zk  
+* 5个节点上停止zk  
 ```Bash
 zkServer.sh stop  
 ```
 
-#### 集群运行成成功后，可以通过访问宿主主机的相应端口上的http服务
-1. http://host-ip:16011这是HBase Master节点  
-2. http://host-ip:50170这是node-101的namenode web页面  
-http://host-ip:50270这是node-102的namenode web页面  
-3. http://host-ip:8088这是node-101的resourcemanager web页面  
+### 集群运行成成功后，可以通过访问宿主主机的相应端口上的http服务
+    1. http://host-ip:16011这是HBase Master节点  
+    2. http://host-ip:50170这是node-101的namenode web页面  
+       http://host-ip:50270这是node-102的namenode web页面  
+    3. http://host-ip:8088这是node-101的resourcemanager web页面  
 

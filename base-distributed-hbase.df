@@ -72,6 +72,7 @@ RUN mkdir /var/run/sshd /var/log/supervisor && \
     echo 'root:root' | chpasswd && \ 
     mkdir /etc/supervisor/ && \
     mkdir -p /root/data/hadoop/tmp/ && \
+    mkdir -p /root/data/hadoop/journalnode && \
     cp /root/conf/distributed-supervisord.conf /etc/supervisor/supervisord.conf && \
     rm -rf meld3-0.6.5* elementtree-1.2.6-20050316* supervisor-3.3.1*
 #RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
@@ -87,9 +88,12 @@ RUN echo "export VISIBLE=now" >> /etc/profile
 RUN ssh-keygen -A && ssh-keygen -t dsa -P '' -f /root/.ssh/id_dsa && \ 
     cat /root/.ssh/id_dsa.pub >> /root/.ssh/authorized_keys && \
     chmod 0600 /root/.ssh/authorized_keys && \
-    chmod u+x /root/conf/distributed-init.sh
+    chmod u+x /root/conf/distributed-init.sh && \
+    sed -i -r 's/^#?Port.*$/Port\ 10022/' /etc/ssh/sshd_config && \
+    echo "Host *" > /root/.ssh/config && \
+    echo "Port 10022" >> /root/.ssh/config
 
-ENV JAVA_HOME="/root/${JDK_PATH}" HBASE_HOME="/root/${HBASE_PATH}" HADOOP_HOME="/root/${HADOOP_PATH}" ZK_HOME="/root/${ZOOKEEPER_PATH}"
+ENV JAVA_HOME="/root/${JDK_PATH}" HBASE_HOME="/root/${HBASE_PATH}" HADOOP_HOME="/root/${HADOOP_PATH}" ZK_HOME="/root/${ZOOKEEPER_PATH}" TZ="Asia/Shanghai"
 ENV PATH=$JAVA_HOME/bin:$HBASE_HOME/bin:$PATH:$HADOOP_HOME/bin:$ZK_HOME/bin:$HADOOP_HOME/sbin
 
 #ssh hdfs zookpeeper hbase

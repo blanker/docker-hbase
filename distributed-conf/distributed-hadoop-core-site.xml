@@ -7,7 +7,11 @@
         </property>
         <property>
                 <name>fs.defaultFS</name>
-                <value>hdfs://node-101:9000</value>
+                <value>hdfs://mycluster</value>
+        </property>
+        <property>
+                <name>ha.zookeeper.quorum</name>
+                <value>node-101:2181,node-102:2181,node-103:2181</value>
         </property>
 </configuration>
 

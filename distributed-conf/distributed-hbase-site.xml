@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
-	<property>
-    		<name>hbase.rootdir</name>
-    		<value>hdfs://node-101:9000/hbase</value>
-	</property>
+        <property>
+                <name>hbase.rootdir</name>
+                <value>hdfs://mycluster/hbase</value>
+        </property>
         <property>
                 <name>hbase.zookeeper.quorum</name>
                 <value>node-101,node-102,node-103,node-104,node-105</value>
